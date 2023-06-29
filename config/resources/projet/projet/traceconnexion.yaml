@@ -1,0 +1,74 @@
+App\Entity\Projet\Projet\Traceconnexion:
+    collectionOperations:
+        get:
+            path: '/trace/connexions/{position}'
+            openapi_context:
+                summary: Returns a list of traceconnexion.
+                description: La trace de connexion peut être pour un utilisateur particulier ou pour l'ensemble des utilisateurs suivant la position spécifié.
+                parameters: [{in: "path", name: "position", required: true, type: text, description: "Dashboard or admin"}]
+            defaults:
+                position: 'dash'
+        post:
+            path: '/traceconnexions'
+        projet_projet_traceconnexions_client_id:
+            method: GET
+            path: '/traceconnexions/identify'
+            controller: App\Controller\Projet\Projet\TraceconnexionController::traceconnexionClientId
+            openapi_context:
+                summary: Endpoint pour filtrer un projet en fonction du client
+                description: Ressources liées aux projets
+                parameters:
+                  - in: query
+                    name: clientId
+                    schema:
+                        type: string
+                        default: ''
+                    required: true
+                    description: Indiquez l'Id du client
+        projet_projet_traceconnexion_fetch_user:
+            method: POST
+            path: '/traceconnexion/generate/accesstoken'
+            controller: App\Controller\Projet\Projet\TraceconnexionController::generateaccesstoken
+            openapi_context:
+                summary: Endpoint pour créer une annonce
+                description: Ressource de création
+                requestBody:
+                    description: Données *Json* à fournir
+                    required: true
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    clientSecret:
+                                        type: string
+                                    authcode:
+                                        type: string
+
+    itemOperations:
+        get: ~
+        projet_projet_update_traceconnexion:
+            method: PUT
+            path: '/traceconnexions/{id}'
+            controller: App\Controller\Projet\Projet\TraceconnexionController::updateTraceconnexion
+            openapi_context:
+                summary: Endpoint pour mettre à jour une trace
+                description: Ressource de connexion
+                parameters:
+                  - in: path
+                    name: id
+                    schema:
+                        type: integer
+                        minimum: 1
+                    required: true
+                    description: Indiquer l'id de l'annonce
+                requestBody:
+                    description: Renseigner les données à modifier
+                    required: true
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    iduser:
+                                        type: integer

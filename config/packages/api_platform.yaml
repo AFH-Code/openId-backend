@@ -1,0 +1,22 @@
+api_platform:
+    title: 'AFHunt Users API'
+    description: "L'API Users AFHunt permet de gérer la connexion des utilisateurs sur l'ensemble des plateforme AFH et Partenaires"
+    version: '1.0.0'
+    mapping:
+        paths: ['%kernel.project_dir%/src/Entity', '%kernel.project_dir%/config/resources']
+    patch_formats: []
+    swagger:
+        versions: [3]
+        api_keys:
+          apiKey:
+            name: X-Bearer-Token
+            type: header
+    formats:
+        jsonld:
+            mime_types: ['application/ld+json']
+
+        json:
+            mime_types: ['application/json']
+
+        html:
+            mime_types: ['text/html']

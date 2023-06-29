@@ -4,12 +4,91 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-
+    siteweb: http://account.afhunt.com
+    sitename: AFH Account
+    emailadmin: africexplorer@gmail.com
+    url_single_email: http://sendapi.afhunt.com/email/singleemail
+    saltcookies: dkjdlkdsfnksdfsd
+    brochures_directory: '%kernel.project_dir%\public'
+    target_archive_web_site: http://127.0.0.1:8000/
 services:
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        bind:
+            $targetDirectory: '%brochures_directory%'
+            $targetArchiveWebSite: '%target_archive_web_site%'
+    general_service.servicetext:
+        class: App\Service\Servicetext\GeneralServicetext
+        arguments: [ '@doctrine.orm.entity_manager', '%brochures_directory%','%target_archive_web_site%' ]
+    App\Service\Servicetext\GeneralServicetext: '@general_service.servicetext'
+    App\Service\Servicetext\FileUploader:
+        arguments:
+            $targetDirectory: '%brochures_directory%'
+            $targetArchiveWebSite: '%target_archive_web_site%'
+    general_validatorfile.image:
+        class:   App\Validator\Validatorfile\ImgValidator
+        arguments: [ '@general_service.servicetext' ]
+        tags:
+            - { name: validator.constraint_validator, alias: my_image }
+    general_validatortext.codepays:
+        class: App\Validator\Validatortext\CodeValidator
+        arguments: [ '@general_service.servicetext' ]
+        tags:
+            - { name: validator.constraint_validator, alias: code_pays }
+    general_validatortext.sitewebuser:
+        class: App\Validator\Validatortext\SitewebValidator
+        arguments: [ '@general_service.servicetext' ]
+        tags:
+            - { name: validator.constraint_validator, alias: siteweb_user }
+    general_validatortext.emailuser:
+        class: App\Validator\Validatortext\EmailValidator
+        arguments: [ '@general_service.servicetext' ]
+        tags:
+            - { name: validator.constraint_validator, alias: email_user }
+    general_validatortext.telormailuser:
+        class: App\Validator\Validatortext\TelormailValidator
+        arguments: [ '@general_service.servicetext' ]
+        tags:
+            - { name: validator.constraint_validator, alias: teloremail_user }
+    general_validatortext.passworduser:
+        class: App\Validator\Validatortext\PasswordValidator
+        arguments: [ '@general_service.servicetext' ]
+        tags:
+            - { name: validator.constraint_validator, alias: password_user }
+    general_validatortext.pseudouser:
+        class: App\Validator\Validatortext\PseudoValidator
+        arguments: [ '@general_service.servicetext' ]
+        tags:
+            - { name: validator.constraint_validator, alias: pseudo_user }
+    general_validator.telephone:
+        class: App\Validator\Validatortext\TelephoneValidator
+        arguments: [ '@general_service.servicetext' ]
+        tags:
+            - { name: validator.constraint_validator, alias: adresse_telephone }
+    general_validator.docsnolimit:
+        class:   App\Validator\Validatorfile\DocsnolimiteValidator
+        arguments: []
+        tags:
+            - { name: validator.constraint_validator, alias: docs_no_limit }
+    afhunt_security.api:
+        class: App\Security\TokenAuthenticator
+    projet_projet.projet:
+        class: App\Entity\Projet\Projet\Projet
+        arguments: [ '@general_service.servicetext' ]
+        tags:
+           - { name: doctrine.event_listener, event: postLoad }
+    projet_projet_service.apiuserauthenticator:
+        class: App\Security\ApiUserAuthenticator
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest }
+    App\DataPersister\Projet\Projet\ProjetDataPersister:
+        tags: [ 'api_platform.data_persister' ]
+    app.http_kernel.cors_subscriber:
+        class: App\EventListener\HttpKernel\CorsSubscriber
+        tags:
+            - { name: kernel.event_listener, event: kernel.response, method: onResponse }
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

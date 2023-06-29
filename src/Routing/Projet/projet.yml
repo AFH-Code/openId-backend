@@ -1,0 +1,29 @@
+pojet_projet_post_newclient:
+    path: /api/auth/users/new/projet
+    methods: ["POST"]
+    defaults:
+        _controller: App\Controller\Projet\Projet\ProjetController::addProjet
+#        _api_resource_class: App\Entity\Projet\Projet\Projet
+        _api_item_operation_name: projet_newclient
+    requirements:
+        id: \d+
+pojet_projet_update_client:
+    path: /api/auth/users/update/projet/{id}
+    methods: ["POST"]
+    defaults:
+        _controller: App\Controller\Projet\Projet\ProjetController::updateProjet
+        _api_item_operation_name: projet_update_client
+    requirements:
+        id: \d+
+pojet_projet_generate_client_key:
+    path: /api/auth/users/generate/client/key/projet/{id}
+    methods: ["POST"]
+    defaults:
+        _controller: App\Controller\Projet\Projet\ProjetController::generateClientKey
+        _api_item_operation_name: projet_generate_client_key
+    requirements:
+        id: \d+
+pojet_projet_test:
+    path: /test/{id}
+    defaults:
+        _controller: App\Controller\Projet\Projet\ProjetController::test

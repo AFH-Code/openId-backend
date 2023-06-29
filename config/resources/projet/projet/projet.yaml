@@ -1,0 +1,7 @@
+App\Entity\Projet\Projet\Projet:
+    collectionOperations:
+        get: ~
+        
+    itemOperations:
+        get:
+            method: GET
