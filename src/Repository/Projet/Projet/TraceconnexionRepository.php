@@ -5,6 +5,9 @@ namespace App\Repository\Projet\Projet;
 use App\Entity\Projet\Projet\Traceconnexion;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Paginator;
+use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
+use Doctrine\Common\Collections\Criteria;
 
 /**
  * @method Traceconnexion|null find($id, $lockMode = null, $lockVersion = null)
@@ -34,47 +37,40 @@ class TraceconnexionRepository extends ServiceEntityRepository
         ;
     }
 
-    public function myFindByUser($userid, $limit)
+    public function myFindByUser($userid, $page, $numberPerPage)
     {
-        return $this->createQueryBuilder('t')
+        if ($page < 1) {
+            throw new \InvalidArgumentException('Page inexistant');
+        }
+        $firstResult = ($page -1) * $numberPerPage;
+        $query = $this->createQueryBuilder('t')
             ->leftJoin('t.projet','p')
             ->leftJoin('t.user','u')
             ->addSelect('p')
             ->addSelect('u')
+
             ->where('u.id = :userid')
             ->setParameter('userid', $userid)
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult()
-        ;
+            ->orderBy('t.date', 'DESC');
+
+        $criteria = Criteria::create()
+                    ->setFirstResult($firstResult)
+                    ->setMaxResults($numberPerPage);
+        $query->addCriteria($criteria);
+
+        $doctrinePaginator = new DoctrinePaginator($query);
+        $paginator = new Paginator($doctrinePaginator);
+
+        $total = (int) $this->findCategorySearch($userid);
+
+        return array('total'=>$total, 'page'=> (int) $page, 'totalItems'=>count($paginator), 'data'=>$paginator);
     }
 
-    // /**
-    //  * @return Traceconnexion[] Returns an array of Traceconnexion objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function findCategorySearch($userid)
     {
-        return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('t.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
+       $query = $this->_em->createQuery('SELECT COUNT(t.id) FROM App\Entity\Projet\Projet\Traceconnexion t, App\Entity\Users\User\User u WHERE t.user = u AND u.id = :userId');
+       $query->setParameter('userId',$userid);
+       return $query->getSingleScalarResult();
     }
-    */
 
-    /*
-    public function findOneBySomeField($value): ?Traceconnexion
-    {
-        return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }

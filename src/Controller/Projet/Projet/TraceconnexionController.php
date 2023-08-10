@@ -123,4 +123,33 @@ class TraceconnexionController extends AbstractController
           return $this->globals->error(ErrorHttp::FORM_ERROR);
         }
     }
+
+    public function listeTraceconnexion(Request $request)
+    {
+      $position = $request->attributes->get('position');
+      if($this->getUser() == null)
+        return $this->globals->error(ErrorHttp::FORM_ERROR);
+
+
+      if(isset($_GET["page"]))
+      {
+        $page = $_GET["page"];
+      }else{
+        $page = 1;
+      }
+      if(isset($_GET["tail"])){
+        $tail = $_GET["tail"];
+      }else{
+        $tail = 10;
+      }
+
+      
+      if($position == 'dashboard')
+      {
+          $liste_traceconnexion = $this->_traceconnexionRepository->myFindByUser($this->getUser()->getId(), $page, $tail);
+      }else{
+          $liste_traceconnexion = $this->_traceconnexionRepository->findAll();
+      }
+      return $liste_traceconnexion;
+    }
 }

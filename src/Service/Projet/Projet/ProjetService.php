@@ -42,8 +42,9 @@ class ProjetService{
         $projet->setProjetUniq($safeProjetname);
         $projet->setDescription($description);
         
-        $profilFileName = $this->fileUploader->publicFileUpload($uploadedFile, $projet->getUploadRootDir(), 'image');
-        $projet->updateSaveFile($profilFileName);
+        //$profilFileName = $this->fileUploader->publicFileUpload($uploadedFile, $projet->getUploadRootDir(), 'image');
+        //$projet->updateSaveFile($profilFileName);
+        $projet->file = $uploadedFile;
         $projet->setUser($user);
         return $projet;
     }
@@ -54,9 +55,10 @@ class ProjetService{
         $projet->setDescription($description);
         //$safeProjetname = $this->slugger->slug($nom).'-'.uniqid();
         //$projet->setProjetUniq($safeProjetname);
-        $projet->setHelperService($this->helperService);
-        $profilFileName = $this->fileUploader->publicFileUpload($uploadedFile, $projet->getUploadRootDir(), 'image');
-        $projet->updateSaveFile($profilFileName);
+        //$projet->setHelperService($this->helperService);
+        //$profilFileName = $this->fileUploader->publicFileUpload($uploadedFile, $projet->getUploadRootDir(), 'image');
+        //$projet->updateSaveFile($profilFileName);
+        $projet->file = $uploadedFile;
         return $projet;
     }
 

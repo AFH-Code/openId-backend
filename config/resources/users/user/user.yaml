@@ -1,0 +1,68 @@
+App\Entity\Users\User\User:
+    collectionOperations:
+        get: ~
+        users_user_security_login:
+            method: POST
+            path: '/users/login'
+            controller: App\Controller\Users\User\SecurityController::login
+            openapi_context:
+                summary: Endpoint pour établir la connexion d'un utilisateur
+                description: Données liées à un utilisateur
+                requestBody:
+                    description: Données *Json* à fournir
+                    required: true
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    username:
+                                        type: string
+                                    password:
+                                        type: string
+        users_user_security_register:
+            method: POST
+            path: '/users'
+            controller: App\Controller\Users\User\UserController::createaccount
+            openapi_context:
+                summary: Endpoint pour la création du compte utilisateur
+                description: Données liées à un utilisateur
+                requestBody:
+                    description: Données *Json* à fournir
+                    required: true
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    firstName:
+                                        type: string
+                                    lastName:
+                                        type: string
+                                    username:
+                                        type: string
+                                    password:
+                                        type: string
+        users_user_user_validate_account:
+            method: POST
+            path: '/users/validate/account'
+            controller: App\Controller\Users\User\UserController::validateAccount
+            openapi_context:
+                summary: Endpoint pour la validation des comptes utilisateur
+                description: Données liées à un utilisateur
+                requestBody:
+                    description: Données *Json* à fournir
+                    required: true
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    user_id:
+                                        type: string
+                                    code:
+                                        type: string
+        
+    itemOperations:
+        get:
+            method: GET

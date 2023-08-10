@@ -48,8 +48,6 @@ class ProjetController extends AbstractController
         if(!$uploadedFile){
             throw new BadRequestHttpException('"file" is required');
         }
-
-        //$id = $request->attributes->get('id');
         $nom = $request->request->get('nom');
         $description = $request->request->get('description');
         //$user = $this->_projetRepository->find($id); //Sélectionner L'utilisateur par l'id
@@ -103,6 +101,28 @@ class ProjetController extends AbstractController
         }else{
             return new JsonResponse(array("status-code" => 400, "description" => "Echec de Création du projet"), Response::HTTP_BAD_REQUEST);
         }
+    }
+
+    public function listeProjetsUser(Request $request)
+    {
+        if($this->getUser() == null)
+            return $this->globals->error(ErrorHttp::FORM_ERROR);
+
+        if(isset($_GET["page"]))
+        {
+            $page = $_GET["page"];
+        }else{
+            $page = 1;
+        }
+        if(isset($_GET["tail"])){
+            $tail = $_GET["tail"];
+        }else{
+            $tail = 10;
+        }
+
+        $liste_projet = $this->_projetRepository->myFindByUser($this->getUser()->getId(), $page, $tail);
+
+        return $liste_projet;
     }
 
     public function test(Projet $projet)

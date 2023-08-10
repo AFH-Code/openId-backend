@@ -1,15 +1,5 @@
 App\Entity\Projet\Projet\Traceconnexion:
     collectionOperations:
-        get:
-            path: '/trace/connexions/{position}'
-            openapi_context:
-                summary: Returns a list of traceconnexion.
-                description: La trace de connexion peut être pour un utilisateur particulier ou pour l'ensemble des utilisateurs suivant la position spécifié.
-                parameters: [{in: "path", name: "position", required: true, type: text, description: "Dashboard or admin"}]
-            defaults:
-                position: 'dash'
-        post:
-            path: '/traceconnexions'
         projet_projet_traceconnexions_client_id:
             method: GET
             path: '/traceconnexions/identify'
@@ -44,6 +34,35 @@ App\Entity\Projet\Projet\Traceconnexion:
                                         type: string
                                     authcode:
                                         type: string
+        projet_projet_liste_traceconnexion:
+            method: GET
+            path: '/traceconnexions/connect/{position}'
+            controller: App\Controller\Projet\Projet\TraceconnexionController::listeTraceconnexion
+            openapi_context:
+                summary: Endpoint pour faire la recherche sur les articles (back-office)
+                description: Ressources liées aux articles
+                parameters:
+                  - in: query
+                    name: page
+                    schema:
+                        type: integer
+                        minimum: 1
+                        default: 1
+                    required: true
+                    description: Indiquez le Numéro de page
+                  - in: query
+                    name: tail
+                    schema:
+                        type: integer
+                        default: 10
+                    required: true
+                  - in: path
+                    name: position
+                    schema:
+                        type: string
+                        default: dashboard
+                    required: false
+                    description: Indiquer la position
 
     itemOperations:
         get: ~

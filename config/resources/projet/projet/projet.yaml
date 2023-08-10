@@ -1,7 +1,81 @@
 App\Entity\Projet\Projet\Projet:
     collectionOperations:
-        get: ~
-        
+        projet_projet_liste_projet:
+            method: GET
+            path: '/projets/user'
+            controller: App\Controller\Projet\Projet\ProjetController::listeProjetsUser
+            openapi_context:
+                summary: Endpoint pour faire la recherche sur les projet
+                description: Ressources liées aux projets
+                parameters:
+                  - in: query
+                    name: page
+                    schema:
+                        type: integer
+                        minimum: 1
+                        default: 1
+                    required: true
+                    description: Indiquez le Numéro de page
+                  - in: query
+                    name: tail
+                    schema:
+                        type: integer
+                        default: 10
+                    required: true
+        projet_projet_create_with_logo:
+            method: POST
+            path: '/projets'
+            deserialize: false
+            controller: App\Controller\Projet\Projet\ProjetController::addProjet
+            openapi_context:
+                summary: Endpoint pour creer un projet avec son logo
+                description: Ressource de création
+                requestBody:
+                    description: Données *form-data* à fournir
+                    required: true
+                    content:
+                        multipart/form-data:
+                            schema:
+                                type: object
+                                properties:
+                                    file:
+                                        type: string
+                                        format: binary        
+                                    nom:
+                                        type: string
+                                    description:
+                                        type: string
+        projet_projet_update_client:
+            method: POST
+            path: '/projets/{id}'
+            deserialize: false
+            controller: App\Controller\Projet\Projet\ProjetController::updateProjet
+            openapi_context:
+                summary: Endpoint pour creer un projet avec son logo
+                description: Ressource de création
+                parameters:
+                  - in: path
+                    name: id
+                    schema:
+                        type: integer
+                        minimum: 1
+                    required: true
+                    description: Indiquer l'id du projet
+                requestBody:
+                    description: Données *form-data* à fournir
+                    required: true
+                    content:
+                        multipart/form-data:
+                            schema:
+                                type: object
+                                properties:
+                                    file:
+                                        type: string
+                                        format: binary        
+                                    nom:
+                                        type: string
+                                    description:
+                                        type: string
     itemOperations:
         get:
             method: GET

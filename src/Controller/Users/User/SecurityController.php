@@ -21,9 +21,6 @@ class SecurityController extends AbstractController
         $this->helperService = $helperService;
     }
 
-    /**
-     * @Route("/user/login", name="users_user_security_login", methods={"POST"})
-    */
     public function login(Request $request)
     {
         $parameters = json_decode($request->getContent(), true);
@@ -33,6 +30,7 @@ class SecurityController extends AbstractController
             $password = $parameters['password'];
             $user = $this->userService->getUserByIndex($username);
             $result = $this->userService->checkAccess($user, $password);
+
             if($result == true)
             {
                 $response = $this->userService->getWebToken($user);

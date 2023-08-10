@@ -1,0 +1,9 @@
+vich_uploader:
+    db_driver: orm
+
+    mappings:
+        logo_projet:
+            uri_prefix: uploads/projet/projet/images/logo
+            upload_destination: '%kernel.project_dir%/public/uploads/projet/projet/images/logo'
+            # Will rename uploaded files using customnamer service.
+            namer: App\Service\Naming\CustomNamer

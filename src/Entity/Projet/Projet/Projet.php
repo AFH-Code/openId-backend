@@ -4,8 +4,8 @@ namespace App\Entity\Projet\Projet;
 
 use App\Entity\Users\User\User;
 use App\Repository\Projet\Projet\ProjetRepository;
-
-//use ApiPlatform\Core\Annotation\ApiProperty;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use ApiPlatform\Core\Annotation\ApiProperty;
 use ApiPlatform\Core\Annotation\ApiResource;
 //use ApiPlatform\Core\Annotation\ApiFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
@@ -17,14 +17,16 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\Service\Servicetext\GeneralServicetext;
 use Doctrine\ORM\Event\LifecycleEventArgs;
+use Symfony\Component\HttpFoundation\File\File;
 
 /**
  * @ORM\Entity()
 * @ORM\Entity(repositoryClass=ProjetRepository::class)
  * @ApiResource(
- *     normalizationContext={"groups"={"projet:read"}, "swagger_definition_name"="Read"},
- *     denormalizationContext={"groups"={"projet:write"}, "swagger_definition_name"="Write"}
+ *     normalizationContext={"groups"={"projet:read"}},
+ *     denormalizationContext={"groups"={"projet:write"}}
  * )
+ * @Vich\Uploadable
  */
 class Projet
 {
@@ -58,6 +60,36 @@ class Projet
      * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $logoprojet;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ApiProperty(iri="https://schema.org/logoprojeturl")
+     * @Groups({"projet:read"})
+     */
+    public $logoprojeturl;
+
+    /**
+     * @Vich\UploadableField(mapping="logo_projet", fileNameProperty="logoprojet", size="imageSize", mimeType="mimeType", originalName="originalName")
+     * @var File|null
+     */
+    public ?File $file = null;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"projet:read"})
+     */
+    private $imageSize;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"projet:read"})
+     */
+    private $originalName;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $mimeType;
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="projets")
@@ -106,8 +138,6 @@ class Projet
     private $projetUniq;
 
     private $helperService;
-
-    
 
     public function __construct(GeneralServicetext $service)
     {
@@ -229,14 +259,6 @@ class Projet
 	{
 	    return $this->getUploadDir(false).'/'.$this->getLogoprojet();
 	}
-
-    /** 
-    * @Groups({"projet:read"})
-    */
-    public function getLogoprojeturl()
-    {
-        return $this->helperService->getArchiveWebDirectory().''.$this->getWebPath();
-    }
 
     /**
 	*@ORM\PreRemove()
@@ -360,6 +382,42 @@ class Projet
     public function setprojetUniq(?string $projetUniq): self
     {
         $this->projetUniq = $projetUniq;
+
+        return $this;
+    }
+
+    public function getImageSize(): ?string
+    {
+        return $this->imageSize;
+    }
+
+    public function setImageSize(?string $imageSize): self
+    {
+        $this->imageSize = $imageSize;
+
+        return $this;
+    }
+
+    public function getOriginalName(): ?string
+    {
+        return $this->originalName;
+    }
+
+    public function setOriginalName(?string $originalName): self
+    {
+        $this->originalName = $originalName;
+
+        return $this;
+    }
+
+    public function getMimeType(): ?string
+    {
+        return $this->mimeType;
+    }
+
+    public function setMimeType($mimeType =null): self
+    {
+        $this->mimeType = $mimeType;
 
         return $this;
     }

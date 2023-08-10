@@ -14,6 +14,7 @@ parameters:
 services:
     # default configuration for services in *this* file
     _defaults:
+        public: true
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
         bind:
@@ -23,6 +24,10 @@ services:
         class: App\Service\Servicetext\GeneralServicetext
         arguments: [ '@doctrine.orm.entity_manager', '%brochures_directory%','%target_archive_web_site%' ]
     App\Service\Servicetext\GeneralServicetext: '@general_service.servicetext'
+    general_service.customnamer:
+        class: App\Service\Naming\CustomNamer
+        arguments: [ '@Vich\UploaderBundle\Util\Transliterator', '@general_service.servicetext' ]
+    App\Service\Naming\CustomNamer: '@general_service.customnamer'
     App\Service\Servicetext\FileUploader:
         arguments:
             $targetDirectory: '%brochures_directory%'

@@ -5,6 +5,9 @@ namespace App\Repository\Projet\Projet;
 use App\Entity\Projet\Projet\Projet;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Paginator;
+use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
+use Doctrine\Common\Collections\Criteria;
 
 /**
  * @method Projet|null find($id, $lockMode = null, $lockVersion = null)
@@ -31,32 +34,37 @@ class ProjetRepository extends ServiceEntityRepository
         ;
     }
 
-    // /**
-    //  * @return Projet[] Returns an array of Projet objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function myFindByUser($userid, $page, $numberPerPage)
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('p.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        if ($page < 1) {
+            throw new \InvalidArgumentException('Page inexistant');
+        }
+        $firstResult = ($page -1) * $numberPerPage;
+        $query = $this->createQueryBuilder('p')
+            ->leftJoin('p.user','u')
+            ->addSelect('u')
 
-    /*
-    public function findOneBySomeField($value): ?Projet
-    {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+            ->where('u.id = :userid')
+            ->setParameter('userid', $userid)
+            ->orderBy('p.date', 'DESC');
+
+        $criteria = Criteria::create()
+                    ->setFirstResult($firstResult)
+                    ->setMaxResults($numberPerPage);
+        $query->addCriteria($criteria);
+
+        $doctrinePaginator = new DoctrinePaginator($query);
+        $paginator = new Paginator($doctrinePaginator);
+
+        $total = (int) $this->findProjetUser($userid);
+
+        return array('total'=>$total, 'page'=> (int) $page, 'totalItems'=>count($paginator), 'data'=>$paginator);
     }
-    */
+
+    public function findProjetUser($userid)
+    {
+       $query = $this->_em->createQuery('SELECT COUNT(p.id) FROM App\Entity\Projet\Projet\Projet p, App\Entity\Users\User\User u WHERE p.user = u AND u.id = :userId');
+       $query->setParameter('userId',$userid);
+       return $query->getSingleScalarResult();
+    }
 }
