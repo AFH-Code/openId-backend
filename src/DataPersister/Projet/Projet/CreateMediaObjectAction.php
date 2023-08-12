@@ -3,7 +3,6 @@ namespace App\DataPersister\Projet\Projet;
 use App\Repository\Projet\Projet\ProjetRepository;
 use App\Entity\Projet\Projet\Projet;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Doctrine\ORM\EntityManagerInterface;
