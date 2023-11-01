@@ -4,6 +4,9 @@
 authentication_token:
     path: /api/login
     methods: ['POST']
-app_directory_afhaccount:
+app_directory_projet:
     resource: '../src/Routing/Projet/'
+    type: directory
+app_directory_users:
+    resource: '../src/Routing/Users/'
     type: directory

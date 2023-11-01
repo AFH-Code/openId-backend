@@ -76,12 +76,12 @@ class GeneralServicetext
 
 	public function tel($text)
 	{
-		$regex ='#^[0-9][0-9]{6,12}$#';
-		if (preg_match($regex, $text) || $text == null || $text == '')
+		$regex = '#^[0-9][0-9|\s]{5,12}$#';
+		if (preg_match($regex, $text) || $text == null)
 		{
 			return true;
 		}else{
-			return false;
+			return false; 
 		}
 	}
 

@@ -21,23 +21,23 @@ class Singleemail
     $headers = ['Accept' => 'application/json'];
     $sender = array();
     $sender['username'] = $this->params->get('sitename');
-    $sender['useremail'] = $this->params->get('emailadmin');
+    $sender['email'] = $this->params->get('emailadmin');
 
     $recipient = array();
     $recipient['username'] = $recipientName;
-    $recipient['useremail'] = $recipientEmail;
-
-    $emailContent = array();
-    $emailContent['subject'] = $subject;
-    $emailContent['emailtitle'] = $title;
-    $emailContent['emailcontent'] = $content;
-    $emailContent['linkaction'] = $emailLink;
+    $recipient['email'] = $recipientEmail;
 
     $tab = array();
-    $tab["clientAuth"] = 'code-client-api';
+    $tab["clientAuth"] = 'R985MBMPQ2IBCQ1PKJLJ1O1HLKRG90';
     $tab["sender"] = $sender;
-    $tab["recipient"] = $recipient;
-    $tab["emailContent"] = $emailContent;
+    $tab["recipients"] = array($recipient);
+
+    $tab['subject'] = $subject;
+    $tab["emailTitle"] = $title;
+    $tab["emailContent"] = $content;
+    $tab["userDefaultTemplate"] = 0;
+    $tab["emailBoostLink"] = $emailLink;;
+
 
     $data = json_encode($tab);
 

@@ -7,7 +7,7 @@ parameters:
     siteweb: http://account.afhunt.com
     sitename: AFH Account
     emailadmin: africexplorer@gmail.com
-    url_single_email: http://sendapi.afhunt.com/email/singleemail
+    url_single_email: https://sendapi.afhunt.com/api/messages/email
     saltcookies: dkjdlkdsfnksdfsd
     brochures_directory: '%kernel.project_dir%\public'
     target_archive_web_site: http://127.0.0.1:8000/
@@ -88,8 +88,6 @@ services:
         class: App\Security\ApiUserAuthenticator
         tags:
             - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest }
-    App\DataPersister\Projet\Projet\ProjetDataPersister:
-        tags: [ 'api_platform.data_persister' ]
     app.http_kernel.cors_subscriber:
         class: App\EventListener\HttpKernel\CorsSubscriber
         tags:

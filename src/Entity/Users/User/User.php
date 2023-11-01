@@ -8,10 +8,12 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use ApiPlatform\Core\Annotation\ApiProperty;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\SerializedName;
-
+use Symfony\Component\HttpFoundation\File\File;
 use App\Validator\Validatortext\Taillemin;
 use App\Validator\Validatortext\Taillemax;
 use App\Validator\Validatortext\Email;
@@ -30,8 +32,9 @@ use App\Entity\Projet\Projet\Traceconnexion;
  *    denormalizationContext={"groups"={"user:write"}}
  * )
  * @ORM\HasLifecycleCallbacks
+ * @Vich\Uploadable
  */
-class User implements UserInterface
+class User implements UserInterface,\Serializable
 {
     /**
      * @ORM\Id
@@ -70,8 +73,8 @@ class User implements UserInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Groups({"user:read", "user:write"})
-     *@Taillemin(valeur= 2, message="Au moins 2 caractères")
-     *@Taillemax(valeur= 80, message="Au plus 80 caractères")
+     * @Taillemin(valeur= 2, message="Au moins 2 caractères")
+     * @Taillemax(valeur= 80, message="Au plus 80 caractères")
      */
     private $firstName;
 
@@ -127,7 +130,37 @@ class User implements UserInterface
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
     */
-    private $imgprofil;
+    private $imgprofilsrc;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ApiProperty(iri="https://schema.org/imgprofil")
+     * @Groups({"user:read"})
+     */
+    public $imgprofil;
+
+    /**
+     * @Vich\UploadableField(mapping="imgprofil_user", fileNameProperty="imgprofilsrc", size="imageSize", mimeType="mimeType", originalName="originalName")
+     * @var File|null
+     */
+    public ?File $file = null;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"user:read"})
+     */
+    private $imageSize;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"user:read"})
+     */
+    private $originalName;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $mimeType;
 
     private $service;
 
@@ -149,6 +182,43 @@ class User implements UserInterface
       $this->validaccount = false;
       $this->projets = new ArrayCollection();
       $this->traceconnexions = new ArrayCollection();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function serialize()
+    {
+        $test = null;
+        return serialize([
+            $this->password,
+            $this->username,
+            $this->id,
+            $this->email,
+            $this->roles,
+            $this->firstName,
+            $this->lastName,
+            $this->projets
+        ]);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function unserialize($serialized)
+    {
+        $data = unserialize($serialized);
+
+        list(
+            $this->password,
+            $this->username,
+            $this->id,
+            $this->email,
+            $this->roles,
+            $this->firstName,
+            $this->lastName,
+            $this->projets
+            ) = $data;
     }
 
     public function getService()
@@ -377,13 +447,25 @@ class User implements UserInterface
 			return $this->getPid();
 		}
 	}
+    
+    public function getImgprofilsrc(): ?string
+    {
+        return $this->imgprofilsrc;
+    }
+
+    public function setImgprofilsrc(?string $imgprofilsrc): self
+    {
+        $this->imgprofilsrc = $imgprofilsrc;
+
+        return $this;
+    }
 
     public function getImgprofil(): ?string
     {
         return $this->imgprofil;
     }
 
-    public function setImgprofil(string $imgprofil): self
+    public function setImgprofil(?string $imgprofil): self
     {
         $this->imgprofil = $imgprofil;
 
@@ -414,31 +496,19 @@ class User implements UserInterface
 
     public function updateSaveFile($imgprofil)
     {
-        $tempOldFilename = $this->getUploadRootDir().''.$this->getImgProfil();
+        $tempOldFilename = $this->getUploadRootDir().''.$this->getImgprofilsrc();
 
         if($this->getImgProfil() != null && file_exists($tempOldFilename)){
             // On supprime le fichier
             unlink($tempOldFilename);
         }
-        $this->setImgProfil($imgprofil);
+        $this->setImgprofilsrc($imgprofil);
     }
     
     public function getWebPath()
 	{
-	    return $this->getUploadDir(false).'/'.$this->getImgprofil();
+	    return $this->getUploadDir(false).'/'.$this->getImgprofilsrc();
 	}
-
-    /**
-	*@ORM\PreRemove()
-	*/
-	public function preRemoveUpload()
-    {
-        $tempOldFilename = $this->getUploadRootDir().''.$this->getImgProfil();
-        if(file_exists($tempOldFilename)){
-            // On supprime le fichier
-            unlink($tempOldFilename);
-        }
-    }
 
     /**
      * @return Collection|Projet[]
@@ -496,6 +566,42 @@ class User implements UserInterface
                 $traceconnexion->setUser(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getImageSize(): ?string
+    {
+        return $this->imageSize;
+    }
+
+    public function setImageSize(?string $imageSize): self
+    {
+        $this->imageSize = $imageSize;
+
+        return $this;
+    }
+
+    public function getOriginalName(): ?string
+    {
+        return $this->originalName;
+    }
+
+    public function setOriginalName(?string $originalName): self
+    {
+        $this->originalName = $originalName;
+
+        return $this;
+    }
+
+    public function getMimeType(): ?string
+    {
+        return $this->mimeType;
+    }
+
+    public function setMimeType($mimeType =null): self
+    {
+        $this->mimeType = $mimeType;
 
         return $this;
     }

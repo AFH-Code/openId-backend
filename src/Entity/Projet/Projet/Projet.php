@@ -260,18 +260,6 @@ class Projet
 	    return $this->getUploadDir(false).'/'.$this->getLogoprojet();
 	}
 
-    /**
-	*@ORM\PreRemove()
-	*/
-	public function preRemoveUpload()
-    {
-        $tempOldFilename = $this->getUploadRootDir().''.$this->getLogoprojet();
-        if(file_exists($tempOldFilename)){
-            // On supprime le fichier
-            unlink($tempOldFilename);
-        }
-    }
-
     public function getLogoprojet(): ?string
     {
         return $this->logoprojet;

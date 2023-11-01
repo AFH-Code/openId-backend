@@ -17,6 +17,7 @@ use App\Service\Servicetext\FileUploader;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use App\Utils\ErrorHttp;
 use App\Utils\Globals;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use App\Service\Email\Singleemail;
 
 class UserController extends AbstractController
@@ -44,43 +45,50 @@ class UserController extends AbstractController
         $parameters = json_decode($request->getContent(), true);
         if($this->helperService->array_keys_exists(array("firstName", "lastName", "username", "password"), $parameters))
         {
-            $user = new User();
-            $user->setFirstName($parameters['firstName']);
-            $user->setLastName($parameters['lastName']);
-            $user->setUsername($parameters['username']);
-            $user->setpassword(
-                $this->_passwordEncoder->encodePassword(
-                    $user,
-                    $parameters['password']
-                )
-            );
-            if($this->helperService->email($parameters['username']))
+            $oldUser = $this->_entityManager->getRepository(User::class)
+					      ->myFindOldUser($parameters['username']);
+            if($oldUser == null)
             {
-              $user->setEmail($parameters['username']);
-            }else if($this->helperService->tel($parameters['username']))
-            {
-              $user->setphone($parameters['username']);
+                $user = new User();
+                $user->setFirstName($parameters['firstName']);
+                $user->setLastName($parameters['lastName']);
+                $user->setUsername($parameters['username']);
+                $user->setpassword(
+                    $this->_passwordEncoder->encodePassword(
+                        $user,
+                        $parameters['password']
+                    )
+                );
+                if($this->helperService->email($parameters['username']))
+                {
+                $user->setEmail($parameters['username']);
+                }else if($this->helperService->tel($parameters['username']))
+                {
+                $user->setphone($parameters['username']);
+                }
+                $user->setUsername($parameters['username']);
+
+                $user->eraseCredentials();
+
+                $tokenInfoUser = $this->userService->generateWebTokenUser($user);
+                $tokenInfoToken = $this->userService->generateWebTokenSecurity($user);
+                $user->setApiToken($tokenInfoUser.']z12U['.$tokenInfoToken);
+
+                $this->_entityManager->persist($user);
+                $this->_entityManager->flush();
+                
+                $code = $user->getLastvisite()->getTimestamp();
+                if($this->helperService->email($user->getUsername()))
+                {
+                    $response = $this->_servicemail->sendNotifEmail($user->getLastName(), $user->getUsername(), 'Vous avez crée votre compte avec succès sur AFHunt', 'Nous sommes heureux de vous compter parmi les nombreux utilisateurs des solutions AFHunt.', 'Le code d\'activation de votre compte est </br> <strong>'.$code.'</strong></br>Cliquez sur le lien ci-dessous pour renseigner le code de validation de votre compte', 'http://myaccount.afhunt.com/');
+                }
+                $result = $this->userService->accountCreate($user, $code);
+                return $result;
+            }else{
+                return $this->globals->error(['message' => 'error, Un utilisateur existe avec cet identifiant', 'code' => 500]);
             }
-            $user->setUsername($parameters['username']);
-
-            $user->eraseCredentials();
-
-            $tokenInfoUser = $this->userService->generateWebTokenUser($user);
-            $tokenInfoToken = $this->userService->generateWebTokenSecurity($user);
-            $user->setApiToken($tokenInfoUser.']z12U['.$tokenInfoToken);
-
-            $this->_entityManager->persist($user);
-            $this->_entityManager->flush();
-            
-            $code = $user->getLastvisite()->getTimestamp();
-            if($this->helperService->email($user->getUsername()))
-            {
-                $response = $this->_servicemail->sendNotifEmail($user->getLastName(), $user->getUsername(), 'Vous avez crée votre compte avec succès sur AFHunt', 'Nous sommes heureux de vous compter parmi les nombreux utilisateurs des solutions AFHunt.', 'Le code d\'activation de votre compte est </br> <strong>'.$code.'</strong></br>Cliquez sur le lien ci-dessous pour renseigner le code de validation de votre compte', 'http://myaccount.afhunt.com/');
-            }
-            $result = $this->userService->accountCreate($user, $code);
-            return $result;
         }else{
-            return $this->globals->error(ErrorHttp::FORM_ERROR);
+            return $this->globals->error(['message' => 'error, Formulaire Invalide', 'code' => 500]);
         }
     }
 
@@ -105,36 +113,60 @@ class UserController extends AbstractController
         }
     }
 
-    /**
-     * @Route("/update/user/{id}", name="users_user_user_update_account", methods={"POST"}, requirements={"page"="\d+"})
-    */
-    public function updateUserAccount(User $user, Request $request, ValidatorInterface $validator, FileUploader $fileUploader)
+    public function updateUserAccount(Request $request, ValidatorInterface $validator, FileUploader $fileUploader)
     {
-        if(isset($_FILES['imgprofil']) && $_FILES['imgprofil']['error'] == 0)
-        {
-            $uploadedFile = $request->files->get('imgprofil');
-            $user->setService($this->helperService);
-            $profilFileName = $fileUploader->publicFileUpload($uploadedFile, $user->getUploadRootDir(), 'image');
-            $user->updateSaveFile($profilFileName);
-
-            $firstname = '';
-            $lastname = '';
-
-            if(isset($_POST['nom']) and isset($_POST['prenom']))
-            {
-                $firstname = $_POST['nom'];
-                $lastname = $_POST['prenom'];
-                $user->setFirstName($firstname);
-                $user->setLastName($lastname);
-            }
-            
-            $this->_entityManager->flush();
-
-            $path = $this->helperService->getArchiveWebDirectory().''.$user->getWebPath();
-            return new JsonResponse(array("status-code" => 200, "description" => "OK - Compte Créer avec succès; Nom du fichier: ", "imgprofil"=>$path, 'firstname'=>$firstname, 'lastname'=>$lastname), Response::HTTP_OK);
+        $uploadedFile = $request->files->get('imgprofil');
+        if(!$uploadedFile){
+            throw new BadRequestHttpException('"file" is required');
         }
+        
+        $nom = $request->request->get('nom');
+        $prenom = $request->request->get('prenom');
+        $id = $request->attributes->get('id');
+        
+        $oldUser = $this->_entityManager->getRepository(User::class)
+					    ->find($id);
 
-        return new JsonResponse(array("status-code" => 200, "description" => "OK - Compte Créer avec succès"), Response::HTTP_OK);
+        if($oldUser != null){
+            
+            $oldUser == $this->userService->updateUser($oldUser, $nom, $prenom, $uploadedFile);
+            $this->_entityManager->flush();
+            $path = $this->helperService->getArchiveWebDirectory().''.$oldUser->getWebPath();
+            return new JsonResponse(array("status-code" => 200, "description" => "OK - Compte Créer avec succès; Nom du fichier: ", "imgprofil"=>$path, 'firstname'=>$prenom, 'lastname'=>$nom), Response::HTTP_OK);
+            
+        }else{
+            return new JsonResponse(array("status-code" => 400, "description" => "Echec de modification du profil"), Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    public function resetContact(Request $request)
+    {
+        $parameters = json_decode($request->getContent(), true);
+        if(count($parameters) == 2 and $this->helperService->array_keys_exists(array("email", "telephone"), $parameters))
+        {
+            $email = $parameters['email'];
+            $telephone = $parameters['telephone'];
+        
+            $oldUser = $this->getUser();
+
+            if($oldUser != null)
+            {
+                if($this->helperService->email($email))
+                {
+                    $oldUser->setEmail($email);
+                }
+                if($this->helperService->tel($telephone))
+                {
+                    $oldUser->setPhone($telephone);
+                }
+                $this->_entityManager->flush();
+                return $this->globals->success(array('email'=>$email, 'telephone'=>$telephone),'Mise à jour effectuée avec succès');
+            }else{
+                return $this->globals->error(ErrorHttp::FORM_ERROR); 
+            }
+        }else{
+            return $this->globals->error(ErrorHttp::FORM_ERROR);
+        }
     }
 }
 

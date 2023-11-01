@@ -17,7 +17,6 @@ use App\Service\Projet\Projet\TraceconnexionService;
 use App\Service\Servicetext\GeneralServicetext;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use App\Entity\Projet\Projet\Traceconnexion;
-
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class ProjetController extends AbstractController

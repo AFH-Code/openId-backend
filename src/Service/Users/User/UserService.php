@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Entity\Users\User\User;
 
 class UserService extends AbstractController{
 
@@ -117,6 +118,16 @@ class UserService extends AbstractController{
         $userdata['imgprofil'] = '';
 
         return new JsonResponse(array("status-code" => 200, "description" => "OK - Compte Créer avec succès", "user"=>$userdata), Response::HTTP_OK);
+    }
+
+    function updateUser(User $user, $nom, $prenom, $imageUpload)
+    {
+        $user->setLastName($nom);
+        $user->setFirstName($prenom);
+
+        $user->file = $imageUpload;
+
+        return $user;
     }
 
     /*
