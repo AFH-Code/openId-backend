@@ -107,8 +107,17 @@ class TraceconnexionService extends AbstractController{
         $userdata['email'] = $user->getEmail();
         $userdata['phone'] = $user->getPhone();
         $userdata['imgprofil'] = $path;
-        $userdata['tokenkey'] = $key;
+        
         $userdata['autorisationsAccept'] = $roles;
+
+        if($user->getSalt() != null)
+        {
+            $userdata['tokenkey'] = $user->getSalt();
+            $userdata['token'] = $user->getPassword();
+        }else{
+            $userdata['tokenkey'] = $key;
+            $userdata['token'] = '';
+        }
 
         return $userdata;
     }

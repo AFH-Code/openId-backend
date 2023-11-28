@@ -30,7 +30,7 @@ final class ProjetNormalizer implements ContextAwareNormalizerInterface, Normali
 
     public function supportsNormalization($data, ?string $format = null, array $context = []): bool
     {
-        if (isset($context[self::ALREADY_CALLED])) {
+        if (isset($context[self::ALREADY_CALLED])){
             return false;
         }
 

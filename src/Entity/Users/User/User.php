@@ -162,6 +162,13 @@ class User implements UserInterface,\Serializable
      */
     private $mimeType;
 
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="salt", type="string", length=255, nullable=true)
+     */
+    private $salt;
+
     private $service;
 
     /**
@@ -293,11 +300,26 @@ class User implements UserInterface,\Serializable
     }
 
     /**
-     * @see UserInterface
+     * Set salt
+     *
+     * @param string $salt
+     * @return User
+     */
+    public function setSalt($salt)
+    {
+        $this->salt = $salt;
+
+        return $this;
+    }
+
+    /**
+     * Get salt
+     *
+     * @return string 
      */
     public function getSalt()
     {
-        // not needed when using the "bcrypt" algorithm in security.yaml
+        return $this->salt;
     }
 
     /**

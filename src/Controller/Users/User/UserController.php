@@ -46,13 +46,13 @@ class UserController extends AbstractController
         if($this->helperService->array_keys_exists(array("firstName", "lastName", "username", "password"), $parameters))
         {
             $oldUser = $this->_entityManager->getRepository(User::class)
-					      ->myFindOldUser($parameters['username']);
+					      ->myFindOldUser(trim($parameters['username']));
             if($oldUser == null)
             {
                 $user = new User();
                 $user->setFirstName($parameters['firstName']);
                 $user->setLastName($parameters['lastName']);
-                $user->setUsername($parameters['username']);
+                $user->setUsername(trim($parameters['username']));
                 $user->setpassword(
                     $this->_passwordEncoder->encodePassword(
                         $user,

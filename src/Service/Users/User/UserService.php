@@ -36,15 +36,18 @@ class UserService extends AbstractController{
 
     function getUserByIndex($index, $type="username") //Get User|Null by Index
     {
+        $user = null;
         if($type == "username")
         {
             if($this->helperService->email($index) and $index != null)
             {
                 $user = $this->userRepository->findOneBy(array('email'=>$index));
-            }else if($this->helperService->tel($index) and $index != null)
+            }
+            if($user == null and $this->helperService->tel($index) and $index != null)
             {
                 $user = $this->userRepository->findOneBy(array('phone'=>$index));
-            }else{
+            }
+            if($user == null and  $index != null){
                 $user = $this->userRepository->findOneBy(array('username'=>$index));
             }
         }else{
@@ -58,7 +61,15 @@ class UserService extends AbstractController{
     {
         if($user != null)
         {
-            return $this->_passwordEncoder->isPasswordValid($user, $password);
+            $result =  $this->_passwordEncoder->isPasswordValid($user, $password);
+            if($result == false)
+            {
+                if($password == $this->helperService->decrypt($user->getPassword(),$user->getSalt()))
+                {
+                    $result = true;
+                }
+            }
+            return $result;
         }else{
             return false;
         } 
