@@ -19,6 +19,8 @@ use App\Utils\ErrorHttp;
 use App\Utils\Globals;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use App\Service\Email\Singleemail;
+use App\Service\Sms\SingleSmsService;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class UserController extends AbstractController
 {
@@ -28,9 +30,11 @@ class UserController extends AbstractController
     private $_passwordEncoder;
     private Globals $globals;
     private $_servicemail;
+    private SingleSmsService $singleSms;
+    private $params;
 
     public function __construct(UserService $userService, GeneralServicetext $helperService, EntityManagerInterface $entityManager, 
-    UserPasswordEncoderInterface $passwordEncoder, Globals $globals, Singleemail $servicemail)
+    UserPasswordEncoderInterface $passwordEncoder, Globals $globals, Singleemail $servicemail, SingleSmsService $singleSms, ParameterBagInterface $params)
     {
         $this->userService = $userService;
         $this->helperService = $helperService;
@@ -38,15 +42,19 @@ class UserController extends AbstractController
         $this->_passwordEncoder = $passwordEncoder;
         $this->globals = $globals;
         $this->_servicemail = $servicemail;
+        $this->singleSms = $singleSms;
+        $this->params = $params;
     }
 
     public function createaccount(Request $request)
     {
         $parameters = json_decode($request->getContent(), true);
-        if($this->helperService->array_keys_exists(array("firstName", "lastName", "username", "password"), $parameters))
+        if($this->helperService->array_keys_exists(array("firstName", "lastName", "username", "password", "countryCode", "dialCode", "telephone"), $parameters))
         {
+            $telephone = $this->helperService->formatPhone(trim($parameters['telephone']));
+            $countryCode = strtolower(trim($parameters['countryCode']));
             $oldUser = $this->_entityManager->getRepository(User::class)
-					      ->myFindOldUser(trim($parameters['username']));
+					        ->myFindOldUser(trim($parameters['username']), $telephone, $countryCode);
             if($oldUser == null)
             {
                 $user = new User();
@@ -61,11 +69,18 @@ class UserController extends AbstractController
                 );
                 if($this->helperService->email($parameters['username']))
                 {
-                $user->setEmail($parameters['username']);
+                    $user->setEmail($parameters['username']);
                 }else if($this->helperService->tel($parameters['username']))
                 {
-                $user->setphone($parameters['username']);
+                    $user->setPhone($parameters['username']);
                 }
+
+                if($user->getPhone() == null and $this->helperService->tel($telephone))
+                {
+                    $user->setPhone($telephone);
+                    $user->setCountryCode($countryCode);
+                }
+
                 $user->setUsername($parameters['username']);
 
                 $user->eraseCredentials();
@@ -105,6 +120,93 @@ class UserController extends AbstractController
             {
                 $response = $this->userService->validateAccount($user, $code);
                 return $response;
+            }else{
+                return $this->globals->error(ErrorHttp::FORM_ERROR);
+            }
+        }else{
+            return $this->globals->error(ErrorHttp::FORM_ERROR);
+        }
+    }
+
+    public function resetPasswordCode(Request $request)
+    {
+        $parameters = json_decode($request->getContent(), true);
+        if($this->helperService->array_keys_exists(array("username"), $parameters))
+        {
+            $username = $parameters['username'];
+            $user = $this->userService->getUserByIndex($username, "username");
+            
+            if($user != null)
+            {
+                $code = $this->helperService->getPassword(8);
+                $user->setDialCode($code);
+                $this->_entityManager->flush();
+
+                $sitename = $this->params->get('sitename');
+			    $emailadmin = $this->params->get('emailadmin');
+                $siteweb = $this->params->get('siteweb');
+                $accountKey = $this->helperService->generateToken($user->getUsername());
+                if($this->helperService->email($username))
+                {
+                    $response = $this->_servicemail->sendNotifEmail(
+                        $user->getName(50), 
+                        $username, 
+                        'Utilisez le code suivant pour renouveller votre mot de passe: '.$code,
+                        'Utilisez le code suivant pour renouveller votre mot de passe: '.$code,
+                        'Utilisez le code suivant pour renouveller votre mot de passe: '.$code, 
+                        $siteweb.'/singlepage/check/code/user?accountKey='.$accountKey
+                    );
+                }else if($this->helperService->tel($username))
+                {
+                    $response = $this->singleSms->sendSms(
+                        $user->getName(50),
+                        $username, 
+                        'Utilisez le code suivant pour renouveller votre mot de passe: '.$code,
+                        null,
+                        null,
+                        $user->getCountryCode()
+                    );
+                }
+
+                $response = $this->_servicemail->sendNotifEmail(
+                    $sitename, 
+                    $emailadmin, 
+                    $user->getName(50).' vient de demander la mise à jour de son mot de passe, son code est le: '.$code,
+                    $user->getName(50).' vient de demander la mise à jour de son mot de passe, son code est le: '.$code,
+                    $user->getName(50).' vient de demander la mise à jour de son mot de passe, son code est le: '.$code,
+                    $siteweb.'/singlepage/check/code/user?accountKey='.$accountKey
+                );
+
+                return new JsonResponse(array("status-code" => 200, "description" => "OK - Code envoyé avec succès !", "accountKey"=>$accountKey), Response::HTTP_OK);;
+            }else{
+                return $this->globals->error(ErrorHttp::FORM_ERROR);
+            }
+        }else{
+            return $this->globals->error(ErrorHttp::FORM_ERROR);
+        }
+    }
+
+    public function updateAccountKey(Request $request)
+    {
+        $parameters = json_decode($request->getContent(), true);
+        if(count($parameters) == 3 and $this->helperService->array_keys_exists(array("password","accountkey","code"), $parameters))
+        {
+            $accountKey = $parameters['accountkey'];
+            $username = $this->helperService->resolveToken($accountKey);
+            
+            $user = $this->_entityManager->getRepository(User::class)
+					    ->findOneBy(array("username"=>$username));
+
+            if($user != null and trim($user->getDialCode()) == trim($parameters['code']))
+            {
+                $passuser = $parameters['password'];
+                $salt = substr(crypt($passuser,''), 0, 16);
+                $user->setSalt($salt);
+                $newpassword = $this->helperService->encrypt($passuser,$salt);
+                $user->setPassword($newpassword);
+                $this->_entityManager->flush();
+                
+                return new JsonResponse(array("status-code" => 200, "description" => "OK - Mot de passe mise à jour avec succès "), Response::HTTP_OK);
             }else{
                 return $this->globals->error(ErrorHttp::FORM_ERROR);
             }

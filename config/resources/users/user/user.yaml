@@ -43,6 +43,13 @@ App\Entity\Users\User\User:
                                         type: string
                                     password:
                                         type: string
+                                    countryCode:
+                                        type: string
+                                    dialCode:
+                                        type: string
+                                    telephone:
+                                        type: string
+                                        
         users_user_user_validate_account:
             method: POST
             path: '/users/validate/account'
@@ -59,6 +66,44 @@ App\Entity\Users\User\User:
                                 type: object
                                 properties:
                                     user_id:
+                                        type: string
+                                    code:
+                                        type: string
+        users_user_user_reset_password_code:
+            method: POST
+            path: '/users/reset/password/code'
+            controller: App\Controller\Users\User\UserController::resetPasswordCode
+            openapi_context:
+                summary: Endpoint pour la mise à jour des accès
+                description: Données liées à un utilisateur
+                requestBody:
+                    description: Données *Json* à fournir
+                    required: true
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    username:
+                                        type: string
+        users_user_user_update_password_accountkey:
+            method: POST
+            path: '/users/update/password/accountkey'
+            controller: App\Controller\Users\User\UserController::updateAccountKey
+            openapi_context:
+                summary: Endpoint pour la mise à jour des accès
+                description: Données liées à un utilisateur
+                requestBody:
+                    description: Données *Json* à fournir
+                    required: true
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    password:
+                                        type: string
+                                    accountkey:
                                         type: string
                                     code:
                                         type: string

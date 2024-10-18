@@ -36,13 +36,15 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->_em->flush();
     }
 
-    public function myFindOldUser($username)
+    public function myFindOldUser($username, $telephone)
     {
         return $this->createQueryBuilder('u')
-            ->where('u.username LIKE :username OR u.email LIKE :email OR u.phone LIKE :phone')
+            ->where('u.username LIKE :username OR u.email LIKE :email')
+            ->orWhere('(u.username LIKE :telephone OR u.phone LIKE :phone)')
             ->setParameter('username', '%'.$username.'%')
             ->setParameter('email', '%'.$username.'%')
-            ->setParameter('phone', '%'.$username.'%')
+            ->setParameter('telephone', '%'.$telephone.'%')
+            ->setParameter('phone', '%'.$telephone.'%')
             ->orderBy('u.begindate', 'ASC')
             ->setMaxResults(1)
             ->getQuery()

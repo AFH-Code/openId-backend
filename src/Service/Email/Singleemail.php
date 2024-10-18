@@ -16,42 +16,63 @@ class Singleemail
       $this->params = $params;
   }
 
-  public function sendNotifEmail($recipientName, $recipientEmail, $subject, $title, $content, $emailLink=null)
+  
+  public function sendNotifEmail($recipientName, $recipientEmail, $subject, $title, $content, $emailLink=null, $senderName=null, $senderEmail = null)
   {
-    $headers = ['Accept' => 'application/json'];
+    $headers = ['Accept' => 'application/json', 'Content-Type'=> 'application/json'];
+    $urlemail = $this->params->get('url_single_email').'api/messages/email';
+
     $sender = array();
-    $sender['username'] = $this->params->get('sitename');
-    $sender['email'] = $this->params->get('emailadmin');
+    if($senderName == null){
+      $sender['username'] = $this->params->get('sitename');
+    }else{
+      $sender['username'] = $senderName;
+    }
+    
+    if($senderEmail == null){
+      $sender['email'] = $this->params->get('emailadmin');
+    }else{
+      $sender['email'] = $senderEmail;
+    }
 
     $recipient = array();
     $recipient['username'] = $recipientName;
     $recipient['email'] = $recipientEmail;
 
+    //$emailContent = array();
+    //$emailContent['subject'] = $subject;
+    //$emailContent['emailtitle'] = $title;
+    //$emailContent['emailcontent'] = $content;
+    //$emailContent['linkaction'] = $emailLink;
+
     $tab = array();
-    $tab["clientAuth"] = 'R985MBMPQ2IBCQ1PKJLJ1O1HLKRG90';
+    $tab["clientAuth"] = 'SKJ74PT0B14X09GPPN9K6ZV21M1KCH';
     $tab["sender"] = $sender;
     $tab["recipients"] = array($recipient);
-
-    $tab['subject'] = $subject;
     $tab["emailTitle"] = $title;
     $tab["emailContent"] = $content;
     $tab["userDefaultTemplate"] = 0;
-    $tab["emailBoostLink"] = $emailLink;;
-
+    $tab["emailBoostLink"] = '';
 
     $data = json_encode($tab);
 
     try {
-
-      $response = $this->client->request('POST', $this->params->get('url_single_email'),
+      $response = $this->client->request('POST', $urlemail,
                                         [
                                           'headers' => $headers,
-                                          'body' => $data
+                                          'body' => $data,
+                                          'verify_peer' => false, 'verify_host' => false
                                         ]
                                       );
-      return $response->getContent();
-      } catch (TransportExceptionInterface $e) {
+      $statusCode = $response->getStatusCode();
+      if($statusCode == 401 || $statusCode == 500)
+      {
           return '{"error": "Unauthorized"}';
+      }else{
+          return $response->getContent();
+      }
+    } catch (TransportExceptionInterface $e) {
+      return '{"error": "Unauthorized"}';
     }
   }
 }

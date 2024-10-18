@@ -9,6 +9,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Service\Servicetext\GeneralServicetext;
 use Symfony\Component\HttpFoundation\Request;
 use App\Service\Users\User\UserService;
+use App\Entity\Users\User\User;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class SecurityController extends AbstractController
 {
@@ -30,7 +32,7 @@ class SecurityController extends AbstractController
         {
             $username = $parameters['username'];
             $password = $parameters['password'];
-            $user = $this->userService->getUserByIndex($username);
+            $user = $this->userService->getUserByIndex($username); //$this->_entityManager->getRepository(User::class)->find(33);
             $result = $this->userService->checkAccess($user, $password);
 
             if($result == true)
@@ -44,7 +46,10 @@ class SecurityController extends AbstractController
                     $user->setPassword($newpassword);
                 }
                 $this->_entityManager->flush();
+
+                
                 $response = $this->userService->getWebToken($user);
+                
             }else{
                 if($user != null)
                 {
@@ -57,8 +62,19 @@ class SecurityController extends AbstractController
             }
         }else{
             //Le format de données envoyé est invalide
-            $response = $this->userService->fakeLoginData();
+            $response = $this->userService->fakeLoginData(); 
         }
+        $this->helperService->setLoggerMethod(__CLASS__.'::'.__FUNCTION__, 'Recueil information profil utilisateur', 'dfd');
+
+        //return new JsonResponse(array("status-code" => 400));
+
+        /*$return = [
+            'status' => 'success',
+            'productId' => 1,
+        ];
+
+        return new JsonResponse($return, 201);*/
+
         return $response;
     }
 }

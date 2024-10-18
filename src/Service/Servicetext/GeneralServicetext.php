@@ -7,18 +7,24 @@ use Doctrine\Common\Collections\ArrayCollection;
 use App\Entity\Users\User\Notification;
 use App\Entity\Produit\Produit\Traceaction;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+
 
 class GeneralServicetext
 {
 	private $em;
 	private $targetDirectory;
 	private $targetArchiveWebSite;
+	private $logger;
+	private $saltcookies;
 
-	public function __construct(EntityManagerInterface $em, $targetDirectory, $targetArchiveWebSite)
+	public function __construct(EntityManagerInterface $em, LoggerInterface $logger, $saltcookies, $targetDirectory, $targetArchiveWebSite)
 	{
 		$this->em = $em;
 		$this->targetDirectory = $targetDirectory;
 		$this->targetArchiveWebSite = $targetArchiveWebSite;
+		$this->logger = $logger;
+		$this->saltcookies = $saltcookies;
 	}
 
 	public function normaliseText($text)
@@ -48,6 +54,14 @@ class GeneralServicetext
 	{
 		$tab1 = array('é','è','à','ù','ç','_','ô','ê','î','+','/','\\');
 		$tab2 = array('e','e','a','u','c','-','o','e','i','1','2','3');
+		$text = str_ireplace($tab1, $tab2, $text);
+		return $text;
+	}
+
+	public function formatPhone($text)
+	{
+		$tab1 = array(' ','(',')');
+		$tab2 = array('','','-');
 		$text = str_ireplace($tab1, $tab2, $text);
 		return $text;
 	}
@@ -194,6 +208,18 @@ class GeneralServicetext
 		return password_hash($message, $algo);
 	}
 
+	public function generateToken($message)
+	{
+		$token = $this->encrypt($message, $this->saltcookies);
+		return $token;
+	}
+
+	public function resolveToken($token)
+	{
+		$message = $this->decrypt($token, $this->saltcookies);
+		return $message;
+	}
+
 	public function verifyPassWord($message, $hash)
 	{
 		if(password_verify($message, $hash))
@@ -249,5 +275,10 @@ class GeneralServicetext
 	public function getArchiveWebDirectory()
 	{
 		return $this->targetArchiveWebSite;
+	}
+
+	public function setLoggerMethod($absolutePath, $description = '', $author = '')
+	{
+		$this->logger->notice('@App: msuaa - @methodPath: '.$absolutePath.' - @Author: '.$author.' - @detail: '.$description);
 	}
 }

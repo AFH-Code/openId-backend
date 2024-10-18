@@ -36,12 +36,12 @@ class ApiUserAuthenticator
         $user->setId(2);
 
 
-        $response = $this->guardHandler->authenticateUserAndHandleSuccess(
+        /*$response = $this->guardHandler->authenticateUserAndHandleSuccess(
             $user,          // the User object you just created
             $request,
             $this->authenticator, // authenticator whose onAuthenticationSuccess you want to use
             'main'          // the name of your firewall in security.yaml
-        );
+        );*/
     }
 
     public function onKernelRequest(RequestEvent $event)//cette Méthode s'éxécute à chaque requête.

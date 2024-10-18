@@ -181,6 +181,16 @@ class User implements UserInterface,\Serializable
     */
     private $traceconnexions;
 
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $countryCode;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $dialCode;
+
     public function __construct()
     {
       $this->roles[] = 'ROLE_USER';
@@ -624,6 +634,30 @@ class User implements UserInterface,\Serializable
     public function setMimeType($mimeType =null): self
     {
         $this->mimeType = $mimeType;
+
+        return $this;
+    }
+
+    public function getCountryCode(): ?string
+    {
+        return $this->countryCode;
+    }
+
+    public function setCountryCode(?string $countryCode): self
+    {
+        $this->countryCode = $countryCode;
+
+        return $this;
+    }
+
+    public function getDialCode(): ?string
+    {
+        return $this->dialCode;
+    }
+
+    public function setDialCode(?string $dialCode): self
+    {
+        $this->dialCode = $dialCode;
 
         return $this;
     }
